@@ -25,70 +25,84 @@
         .glow-shadow {
             box-shadow: 0 0 15px rgba(76, 209, 255, 0.4), 0 0 5px rgba(76, 209, 255, 0.6);
         }
-        .chat-bubble-me {
-            background-color: #3b82f6; /* Blue */
+        .pink-glow-shadow {
+            box-shadow: 0 0 15px rgba(236, 72, 153, 0.4), 0 0 5px rgba(236, 72, 153, 0.6);
         }
-        .chat-bubble-other {
-            background-color: #4a5568; /* Gray */
-        }
+        /* Custom scrollbar for a modern look */
         #chat-window::-webkit-scrollbar {
-            width: 8px;
+            width: 6px;
         }
         #chat-window::-webkit-scrollbar-track {
-            background: #1a202c;
+            background: transparent;
         }
         #chat-window::-webkit-scrollbar-thumb {
-            background-color: #4a5568;
+            background-color: #4f46e5;
             border-radius: 20px;
-            border: 3px solid #1a202c;
+        }
+        /* Starry background */
+        #star-field {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #0c0a1a;
+            overflow: hidden;
+            z-index: -1;
+        }
+        .star {
+            position: absolute;
+            background: white;
+            border-radius: 50%;
+            animation: twinkle 5s infinite;
+        }
+        @keyframes twinkle {
+            0%, 100% { opacity: 0.5; }
+            50% { opacity: 1; }
         }
     </style>
 </head>
-<body class="bg-gray-900 text-white overflow-hidden h-screen">
+<body class="bg-slate-900 text-white overflow-hidden h-screen">
 
-    <!-- Background Animation -->
-    <div class="absolute inset-0 z-0 opacity-50">
-        <div class="absolute inset-0 bg-cover bg-center" style="background-image: url('https://placehold.co/1920x1080/000022/FFFFFF?text=Space+Background');"></div>
-        <div class="absolute inset-0 bg-black opacity-50"></div>
-    </div>
+    <div id="star-field"></div>
 
     <!-- Login Screen -->
-    <div id="login-screen" class="fixed inset-0 bg-gray-900 bg-opacity-90 z-50 flex items-center justify-center backdrop-blur-sm">
-        <div class="w-full max-w-sm p-8 space-y-6 bg-gray-800 bg-opacity-80 rounded-2xl border border-blue-400/50 glow-shadow">
+    <div id="login-screen" class="fixed inset-0 bg-slate-900/80 z-50 flex items-center justify-center backdrop-blur-sm p-4">
+        <div class="w-full max-w-sm p-8 space-y-6 bg-slate-800/70 rounded-2xl border border-indigo-500/30 glow-shadow">
             <div class="text-center">
-                <svg xmlns="http://www.w3.org/2000/svg" class="w-16 h-16 mx-auto text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M8 11V7a4 4 0 118 0v4M5 9h14l1 12H4L5 9z" />
+                <svg xmlns="http://www.w3.org/2000/svg" class="w-16 h-16 mx-auto text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 5.25a3 3 0 0 1 3 3m3 0a6 6 0 0 1-7.029 5.912c-.563-.097-1.159.026-1.563.43L10.5 17.25H8.25v2.25H6v2.25H2.25v-2.818c0-.597.237-1.17.659-1.591l6.499-6.499c.404-.404.527-1 .43-1.563A6 6 0 1 1 21.75 8.25Z" />
                 </svg>
-                <h1 class="text-3xl font-bold mt-4">بوابة خاصة</h1>
-                <p class="text-blue-200 mt-2">مطلوب إذن للوصول</p>
+                <h1 class="text-3xl font-bold mt-4">بوابة سرية</h1>
+                <p class="text-indigo-300 mt-2">مطلوب تصريح للعبور</p>
             </div>
             <form id="login-form" class="space-y-4">
                 <div>
-                    <label for="username" class="block text-sm font-medium text-blue-200">اسم المستخدم</label>
-                    <input type="text" id="username" name="username" class="w-full px-4 py-2 mt-1 text-white bg-gray-700 border border-gray-600 rounded-lg focus:ring-blue-500 focus:border-blue-500 focus:outline-none focus:ring-2" placeholder="martha" required>
+                    <label for="username" class="block text-sm font-medium text-indigo-200">اسم المستخدم</label>
+                    <input type="text" id="username" name="username" class="w-full px-4 py-2 mt-1 text-white bg-slate-700 border border-slate-600 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 focus:outline-none focus:ring-2" placeholder="martha" required>
                 </div>
                 <div>
-                    <label for="password" class="block text-sm font-medium text-blue-200">كلمة المرور</label>
-                    <input type="password" id="password" name="password" class="w-full px-4 py-2 mt-1 text-white bg-gray-700 border border-gray-600 rounded-lg focus:ring-blue-500 focus:border-blue-500 focus:outline-none focus:ring-2" placeholder="••••••••" required>
+                    <label for="password" class="block text-sm font-medium text-indigo-200">كلمة المرور</label>
+                    <input type="password" id="password" name="password" class="w-full px-4 py-2 mt-1 text-white bg-slate-700 border border-slate-600 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 focus:outline-none focus:ring-2" placeholder="••••••••" required>
                 </div>
                 <p id="login-error" class="text-red-400 text-sm hidden">المعلومات غير صحيحة.</p>
-                <button type="submit" class="w-full px-4 py-3 font-bold text-white bg-blue-600 rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 focus:ring-offset-gray-800 transition-all duration-300 transform hover:scale-105">
-                    الدخول إلى المجرة
+                <button type="submit" class="w-full px-4 py-3 font-bold text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 focus:ring-offset-slate-800 transition-all duration-300 transform hover:scale-105">
+                    العبور
                 </button>
             </form>
         </div>
     </div>
 
     <!-- User Selection Screen -->
-    <div id="user-selection-screen" class="fixed inset-0 bg-gray-900 bg-opacity-90 z-40 flex items-center justify-center backdrop-blur-sm hidden">
+    <div id="user-selection-screen" class="fixed inset-0 bg-slate-900/80 z-40 flex items-center justify-center backdrop-blur-sm hidden p-4">
         <div class="text-center">
-            <h1 class="text-4xl font-bold mb-8">من أنت؟</h1>
-            <div class="flex space-x-8 rtl:space-x-reverse">
-                <button id="select-neptune" class="p-8 bg-blue-600 rounded-2xl transform hover:scale-110 transition-transform duration-300 glow-shadow">
+            <h1 class="text-4xl font-bold mb-8 text-slate-100">اختر هويتك الكونية</h1>
+            <div class="flex flex-col sm:flex-row gap-8">
+                <button id="select-neptune" class="p-8 bg-indigo-600 rounded-2xl transform hover:scale-110 transition-transform duration-300 glow-shadow">
                     <span class="text-5xl">🪐</span>
                     <p class="text-2xl font-bold mt-4">Neptune</p>
                 </button>
-                <button id="select-martha" class="p-8 bg-pink-500 rounded-2xl transform hover:scale-110 transition-transform duration-300" style="box-shadow: 0 0 15px rgba(236, 72, 153, 0.4), 0 0 5px rgba(236, 72, 153, 0.6);">
+                <button id="select-martha" class="p-8 bg-pink-600 rounded-2xl transform hover:scale-110 transition-transform duration-300 pink-glow-shadow">
                     <span class="text-5xl">✨</span>
                     <p class="text-2xl font-bold mt-4">Martha</p>
                 </button>
@@ -97,41 +111,37 @@
     </div>
     
     <!-- Main Chat Application -->
-    <div id="chat-app" class="relative z-10 h-screen flex-col hidden">
-        <header class="flex items-center justify-between p-4 bg-gray-800/50 backdrop-blur-md border-b border-gray-700">
-            <div class="flex items-center space-x-4 rtl:space-x-reverse">
+    <div id="chat-app" class="h-screen flex flex-col hidden">
+        <!-- Header -->
+        <header class="flex items-center justify-between p-3 sm:p-4 bg-slate-900/70 backdrop-blur-md border-b border-slate-700">
+            <div class="flex items-center space-x-3 rtl:space-x-reverse">
                 <span id="other-user-avatar" class="text-3xl"></span>
                 <div>
-                    <h1 id="other-user-name" class="text-xl font-bold"></h1>
-                    <p id="other-user-status" class="text-sm text-green-400">متصل الآن</p>
+                    <h1 id="other-user-name" class="text-lg sm:text-xl font-bold"></h1>
+                    <p id="other-user-status" class="text-xs sm:text-sm text-green-400 transition-colors"></p>
                 </div>
             </div>
-            <h2 class="text-xl font-bold text-blue-300">Space Chat</h2>
+            <button id="logout-button" class="p-2 rounded-full text-slate-400 hover:bg-slate-700 hover:text-white transition-colors" title="تسجيل الخروج">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                </svg>
+            </button>
         </header>
+
+        <!-- Chat Window -->
         <main id="chat-window" class="flex-1 p-4 overflow-y-auto"></main>
-        <footer class="p-4 bg-gray-800/50 backdrop-blur-md border-t border-gray-700">
+
+        <!-- Message Input -->
+        <footer class="p-3 sm:p-4 bg-slate-900/70 backdrop-blur-md border-t border-slate-700">
             <form id="message-form" class="flex items-center space-x-3 rtl:space-x-reverse">
-                <input id="message-input" type="text" class="flex-1 w-full px-4 py-3 text-white bg-gray-700 border border-gray-600 rounded-full focus:ring-blue-500 focus:border-blue-500 focus:outline-none focus:ring-2" placeholder="اكتب رسالتك المشفرة..." autocomplete="off">
-                <button id="send-button" type="submit" class="p-3 bg-blue-600 rounded-full hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 focus:ring-offset-gray-800 transition-transform transform hover:scale-110">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <input id="message-input" type="text" class="flex-1 w-full px-4 py-3 text-white bg-slate-800 border border-slate-700 rounded-full focus:ring-indigo-500 focus:border-indigo-500 focus:outline-none focus:ring-2" placeholder="اكتب رسالة مشفرة..." autocomplete="off">
+                <button id="send-button" type="submit" class="p-3 bg-indigo-600 rounded-full hover:bg-indigo-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 focus:ring-offset-slate-900 transition-all transform hover:scale-110">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
                     </svg>
                 </button>
             </form>
         </footer>
-    </div>
-
-    <!-- Error Modal -->
-    <div id="error-modal" class="fixed inset-0 bg-gray-900 bg-opacity-90 z-50 flex items-center justify-center backdrop-blur-sm hidden">
-        <div class="w-full max-w-lg p-8 space-y-4 bg-red-900 bg-opacity-95 rounded-2xl border border-red-500/50">
-            <h2 class="text-2xl font-bold text-red-200">خطأ في الإعدادات</h2>
-            <div id="error-message" class="text-red-200 text-right">
-                <!-- Error message will be injected here -->
-            </div>
-            <button id="close-error-modal" class="w-full mt-4 px-4 py-2 font-bold text-white bg-red-600 rounded-lg hover:bg-red-700">
-                فهمت
-            </button>
-        </div>
     </div>
     
     <!-- Firebase SDKs -->
@@ -153,11 +163,11 @@
         const db = getFirestore(app);
         const auth = getAuth(app);
 
-        // --- Security Constants ---
+        // --- Constants ---
         const CORRECT_PASSWORD_HASH = CryptoJS.SHA256('neptune').toString(CryptoJS.enc.Hex);
-        const SECRET_KEY = 'neptune'; 
+        const SECRET_KEY = 'neptune';
 
-        // --- App State & DOM Elements ---
+        // --- App State & DOM ---
         let currentUser, otherUser;
         const loginScreen = document.getElementById('login-screen');
         const loginForm = document.getElementById('login-form');
@@ -167,17 +177,43 @@
         const messageForm = document.getElementById('message-form');
         const messageInput = document.getElementById('message-input');
         const chatWindow = document.getElementById('chat-window');
-        const errorModal = document.getElementById('error-modal');
-        const errorMessageEl = document.getElementById('error-message');
+        const logoutButton = document.getElementById('logout-button');
         
-        // --- Crypto Functions ---
-        function encryptMessage(text) { return CryptoJS.AES.encrypt(text, SECRET_KEY).toString(); }
-        function decryptMessage(ciphertext) {
-            const bytes = CryptoJS.AES.decrypt(ciphertext, SECRET_KEY);
-            return bytes.toString(CryptoJS.enc.Utf8);
+        // --- Core Functions ---
+        function checkSession() {
+            const savedUser = localStorage.getItem('chatUser');
+            if (savedUser) {
+                currentUser = savedUser;
+                otherUser = currentUser === 'neptune' ? 'martha' : 'neptune';
+                loginScreen.classList.add('hidden');
+                userSelectionScreen.classList.add('hidden');
+                startApp();
+            } else {
+                loginScreen.classList.remove('hidden');
+            }
         }
 
-        // --- Login Logic ---
+        async function startApp() {
+            try {
+                await signInAnonymously(auth);
+                chatApp.classList.remove('hidden');
+                chatApp.classList.add('flex'); // Ensure flex display
+                setupChatUI();
+                listenForMessages();
+                listenForStatus();
+                updateStatus();
+            } catch (error) {
+                console.error("Error starting app:", error);
+                alert("لا يمكن الاتصال بالخدمة. تأكد من تفعيل Anonymous Sign-In في إعدادات Firebase Authentication.");
+            }
+        }
+        
+        // --- UI Setup & Listeners ---
+        function setupChatUI() {
+            document.getElementById('other-user-name').textContent = otherUser.charAt(0).toUpperCase() + otherUser.slice(1);
+            document.getElementById('other-user-avatar').textContent = otherUser === 'neptune' ? '🪐' : '✨';
+        }
+
         loginForm.addEventListener('submit', (e) => {
             e.preventDefault();
             const username = loginForm.username.value.toLowerCase();
@@ -192,49 +228,23 @@
             }
         });
         
-        // --- User Selection ---
-        document.getElementById('select-neptune').addEventListener('click', () => { currentUser = 'neptune'; otherUser = 'martha'; startApp(); });
-        document.getElementById('select-martha').addEventListener('click', () => { currentUser = 'martha'; otherUser = 'neptune'; startApp(); });
-        document.getElementById('close-error-modal').addEventListener('click', () => {
-            errorModal.classList.add('hidden');
+        function selectUser(selectedUser) {
+            currentUser = selectedUser;
+            otherUser = currentUser === 'neptune' ? 'martha' : 'neptune';
+            localStorage.setItem('chatUser', currentUser); // Save user session
+            userSelectionScreen.classList.add('hidden');
+            startApp();
+        }
+
+        document.getElementById('select-neptune').addEventListener('click', () => selectUser('neptune'));
+        document.getElementById('select-martha').addEventListener('click', () => selectUser('martha'));
+
+        logoutButton.addEventListener('click', () => {
+            localStorage.removeItem('chatUser');
+            location.reload();
         });
 
-        async function startApp() {
-            try {
-                await signInAnonymously(auth);
-                userSelectionScreen.classList.add('hidden');
-                chatApp.style.display = 'flex';
-                setupChatUI();
-                listenForMessages();
-                listenForStatus();
-                updateStatus();
-            } catch (error) {
-                console.error("Error starting app:", error);
-                if (error.code === 'auth/admin-restricted-operation') {
-                    errorMessageEl.innerHTML = `
-                        <p class="mb-4"><strong>المشكلة:</strong> لم يتم تمكين "تسجيل الدخول المجهول" في إعدادات Firebase.</p>
-                        <p class="mb-2"><strong>الحل:</strong></p>
-                        <ol class="list-decimal list-inside pr-4 space-y-1">
-                            <li>اذهب إلى <strong>وحدة تحكم Firebase</strong>.</li>
-                            <li>اختر مشروعك: <strong>neptune-4153a</strong>.</li>
-                            <li>من القائمة، اذهب إلى <strong>Build > Authentication</strong>.</li>
-                            <li>انقر على تبويب <strong>Sign-in method</strong>.</li>
-                            <li>في القائمة، ابحث عن <strong>Anonymous</strong> وانقر عليها.</li>
-                            <li>اضغط على زر <strong>Enable</strong> ثم <strong>Save</strong>.</li>
-                        </ol>`;
-                } else {
-                    errorMessageEl.textContent = `حدث خطأ غير متوقع: ${error.message}`;
-                }
-                errorModal.classList.remove('hidden');
-            }
-        }
-
-        // --- UI & Firestore Functions ---
-        function setupChatUI() {
-            document.getElementById('other-user-name').textContent = otherUser.charAt(0).toUpperCase() + otherUser.slice(1);
-            document.getElementById('other-user-avatar').textContent = otherUser === 'neptune' ? '🪐' : '✨';
-        }
-
+        // --- Firebase Functions ---
         function listenForMessages() {
             const messagesRef = collection(db, 'messages');
             const q = query(messagesRef);
@@ -242,6 +252,7 @@
                 const messages = [];
                 snapshot.forEach(doc => messages.push({ ...doc.data(), id: doc.id }));
                 messages.sort((a, b) => (a.timestamp?.toMillis() || 0) - (b.timestamp?.toMillis() || 0));
+                
                 chatWindow.innerHTML = '';
                 messages.forEach(displayMessage);
                 chatWindow.scrollTop = chatWindow.scrollHeight;
@@ -250,6 +261,7 @@
         
         function listenForStatus() {
             const statusEl = document.getElementById('other-user-status');
+            if (!otherUser) return;
             const statusRef = doc(db, 'status', otherUser);
             onSnapshot(statusRef, (doc) => {
                 if (doc.exists()) {
@@ -259,35 +271,37 @@
                         const diffMinutes = (new Date() - lastOnline) / (1000 * 60);
                         if (diffMinutes < 2) {
                              statusEl.textContent = 'متصل الآن';
-                             statusEl.classList.remove('text-yellow-400');
-                             statusEl.classList.add('text-green-400');
+                             statusEl.classList.replace('text-yellow-400', 'text-green-400');
                         } else {
                             statusEl.textContent = formatTimeAgo(lastOnline);
-                             statusEl.classList.remove('text-green-400');
-                             statusEl.classList.add('text-yellow-400');
+                             statusEl.classList.replace('text-green-400', 'text-yellow-400');
                         }
                     }
                 } else {
-                    statusEl.textContent = 'غير معروف';
+                    statusEl.textContent = 'غير متصل';
+                    statusEl.classList.replace('text-green-400', 'text-yellow-400');
                 }
             });
         }
 
         function displayMessage(msg) {
             const isMe = msg.sender === currentUser;
-            const content = msg.encryptedContent ? decryptMessage(msg.encryptedContent) : '';
+            const content = msg.encryptedContent ? CryptoJS.AES.decrypt(msg.encryptedContent, SECRET_KEY).toString(CryptoJS.enc.Utf8) : '';
+            const bubbleClasses = isMe ? 'bg-indigo-600 rounded-br-none' : 'bg-slate-700 rounded-bl-none';
+            const justifyClass = isMe ? 'justify-end' : 'justify-start';
+            
             const messageElement = `
-                <div class="flex ${isMe ? 'justify-end' : 'justify-start'} mb-4">
-                    <div class="max-w-md">
-                        <div class="${isMe ? 'chat-bubble-me' : 'chat-bubble-other'} text-white p-3 rounded-2xl ${isMe ? 'rounded-br-lg' : 'rounded-bl-lg'}">
-                            <p>${content}</p>
+                <div class="flex ${justifyClass} mb-4">
+                    <div class="max-w-xs sm:max-w-md">
+                        <div class="${bubbleClasses} text-white p-3 rounded-2xl">
+                            <p class="break-words">${content}</p>
                         </div>
-                        <div class="text-xs ${isMe ? 'text-right' : 'text-left'} text-gray-400 mt-1 pr-2 rtl:pr-0 rtl:pl-2">
+                        <div class="text-xs ${isMe ? 'text-right' : 'text-left'} text-slate-400 mt-1 px-2">
                             ${msg.timestamp ? formatMessageTime(msg.timestamp.toDate()) : ''}
                         </div>
                     </div>
                 </div>`;
-            chatWindow.innerHTML += messageElement;
+            chatWindow.insertAdjacentHTML('beforeend', messageElement);
         }
 
         messageForm.addEventListener('submit', async (e) => {
@@ -295,9 +309,10 @@
             const text = messageInput.value.trim();
             if (text) {
                 try {
+                    const encryptedText = CryptoJS.AES.encrypt(text, SECRET_KEY).toString();
                     await addDoc(collection(db, 'messages'), {
                         sender: currentUser,
-                        encryptedContent: encryptMessage(text),
+                        encryptedContent: encryptedText,
                         timestamp: serverTimestamp(),
                     });
                     messageInput.value = '';
@@ -309,50 +324,57 @@
         });
 
         function updateStatus() {
+            if (!currentUser) return;
             setDoc(doc(db, 'status', currentUser), { lastOnline: serverTimestamp() }, { merge: true });
         }
         
         setInterval(updateStatus, 60000);
 
-        // --- Time Formatting Helpers ---
+        // --- Time Formatting ---
         function formatMessageTime(date) {
-            let hours = date.getHours();
-            let minutes = date.getMinutes();
-            
-            // Pad with leading zero if needed for a consistent HH:MM format
-            hours = hours < 10 ? '0' + hours : hours;
-            minutes = minutes < 10 ? '0' + minutes : minutes;
-            
-            // Return time in HH:MM format with Latin numerals
-            return `${hours}:${minutes}`;
+            return date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false });
         }
 
         function formatTimeAgo(date) {
             const now = new Date();
             const totalSeconds = Math.floor((now - date) / 1000);
-
-            if (totalSeconds < 1) { return 'الآن'; }
-
+            if (totalSeconds < 60) return `منذ بضع ثوانٍ`;
+            
             const days = Math.floor(totalSeconds / 86400);
             const hours = Math.floor((totalSeconds % 86400) / 3600);
             const minutes = Math.floor((totalSeconds % 3600) / 60);
-            const seconds = totalSeconds % 60;
 
             const parts = [];
-            if (days > 0) { parts.push(`${days} أيام`); }
-            if (hours > 0) { parts.push(`${hours} ساعات`); }
-            if (minutes > 0) { parts.push(`${minutes} دقائق`); }
-            if (seconds > 0 && days === 0 && hours === 0) {
-                parts.push(`${seconds} ثانية`);
-            }
+            if (days > 0) parts.push(`${days} يوم`);
+            if (hours > 0) parts.push(`${hours} ساعة`);
+            if (minutes > 0) parts.push(`${minutes} دقيقة`);
             
-            if (parts.length === 0){ return `منذ بضع ثوانٍ`; }
-
             return `منذ ${parts.join(' و ')}`;
         }
+        
+        // --- Background Stars ---
+        function createStars() {
+            const starField = document.getElementById('star-field');
+            for (let i = 0; i < 150; i++) {
+                const star = document.createElement('div');
+                star.className = 'star';
+                const size = Math.random() * 3 + 1;
+                star.style.width = `${size}px`;
+                star.style.height = `${size}px`;
+                star.style.top = `${Math.random() * 100}%`;
+                star.style.left = `${Math.random() * 100}%`;
+                star.style.animationDelay = `${Math.random() * 5}s`;
+                star.style.animationDuration = `${Math.random() * 5 + 3}s`;
+                starField.appendChild(star);
+            }
+        }
+        
+        // --- App Initialization ---
+        createStars();
+        checkSession();
+
     </script>
 </body>
 </html>
 ```
 
-لقد قمت بتعديل الكود. لقد قمت بتحديث دالة تنسيق الوقت لاستخدام الأرقام اللاتينية، مما يضمن عرضًا ثابتًا وموحدًا عبر التطب
