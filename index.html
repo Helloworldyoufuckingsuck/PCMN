@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Neptune & Martha | Private Space Chat</title>
+    
+    <!-- Tailwind CSS for styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Google Fonts for a spacey feel -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Exo+2:wght@300;400;700&family=Cairo:wght@400;700&display=swap" rel="stylesheet">
+    
+    <!-- CryptoJS for encryption and hashing -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+    
+    <style>
+        body {
+            font-family: 'Cairo', 'Exo 2', sans-serif;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+        .glow-shadow {
+            box-shadow: 0 0 15px rgba(76, 209, 255, 0.4), 0 0 5px rgba(76, 209, 255, 0.6);
+        }
+        .chat-bubble-me {
+            background-color: #3b82f6; /* Blue */
+        }
+        .chat-bubble-other {
+            background-color: #4a5568; /* Gray */
+        }
+        #chat-window::-webkit-scrollbar {
+            width: 8px;
+        }
+        #chat-window::-webkit-scrollbar-track {
+            background: #1a202c;
+        }
+        #chat-window::-webkit-scrollbar-thumb {
+            background-color: #4a5568;
+            border-radius: 20px;
+            border: 3px solid #1a202c;
+        }
+    </style>
+</head>
+<body class="bg-gray-900 text-white overflow-hidden h-screen">
+
+    <!-- Background Animation -->
+    <div class="absolute inset-0 z-0 opacity-50">
+        <div class="absolute inset-0 bg-cover bg-center" style="background-image: url('https://placehold.co/1920x1080/000022/FFFFFF?text=Space+Background');"></div>
+        <div class="absolute inset-0 bg-black opacity-50"></div>
+    </div>
+
+    <!-- Login Screen -->
+    <div id="login-screen" class="fixed inset-0 bg-gray-900 bg-opacity-90 z-50 flex items-center justify-center backdrop-blur-sm">
+        <div class="w-full max-w-sm p-8 space-y-6 bg-gray-800 bg-opacity-80 rounded-2xl border border-blue-400/50 glow-shadow">
+            <div class="text-center">
+                <svg xmlns="http://www.w3.org/2000/svg" class="w-16 h-16 mx-auto text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M8 11V7a4 4 0 118 0v4M5 9h14l1 12H4L5 9z" />
+                </svg>
+                <h1 class="text-3xl font-bold mt-4">بوابة خاصة</h1>
+                <p class="text-blue-200 mt-2">مطلوب إذن للوصول</p>
+            </div>
+            <form id="login-form" class="space-y-4">
+                <div>
+                    <label for="username" class="block text-sm font-medium text-blue-200">اسم المستخدم</label>
+                    <input type="text" id="username" name="username" class="w-full px-4 py-2 mt-1 text-white bg-gray-700 border border-gray-600 rounded-lg focus:ring-blue-500 focus:border-blue-500 focus:outline-none focus:ring-2" placeholder="martha" required>
+                </div>
+                <div>
+                    <label for="password" class="block text-sm font-medium text-blue-200">كلمة المرور</label>
+                    <input type="password" id="password" name="password" class="w-full px-4 py-2 mt-1 text-white bg-gray-700 border border-gray-600 rounded-lg focus:ring-blue-500 focus:border-blue-500 focus:outline-none focus:ring-2" placeholder="••••••••" required>
+                </div>
+                <p id="login-error" class="text-red-400 text-sm hidden">المعلومات غير صحيحة.</p>
+                <button type="submit" class="w-full px-4 py-3 font-bold text-white bg-blue-600 rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 focus:ring-offset-gray-800 transition-all duration-300 transform hover:scale-105">
+                    الدخول إلى المجرة
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- User Selection Screen -->
+    <div id="user-selection-screen" class="fixed inset-0 bg-gray-900 bg-opacity-90 z-40 flex items-center justify-center backdrop-blur-sm hidden">
+        <div class="text-center">
+            <h1 class="text-4xl font-bold mb-8">من أنت؟</h1>
+            <div class="flex space-x-8 rtl:space-x-reverse">
+                <button id="select-neptune" class="p-8 bg-blue-600 rounded-2xl transform hover:scale-110 transition-transform duration-300 glow-shadow">
+                    <span class="text-5xl">🪐</span>
+                    <p class="text-2xl font-bold mt-4">Neptune</p>
+                </button>
+                <button id="select-martha" class="p-8 bg-pink-500 rounded-2xl transform hover:scale-110 transition-transform duration-300" style="box-shadow: 0 0 15px rgba(236, 72, 153, 0.4), 0 0 5px rgba(236, 72, 153, 0.6);">
+                    <span class="text-5xl">✨</span>
+                    <p class="text-2xl font-bold mt-4">Martha</p>
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Main Chat Application -->
+    <div id="chat-app" class="relative z-10 h-screen flex-col hidden">
+        <header class="flex items-center justify-between p-4 bg-gray-800/50 backdrop-blur-md border-b border-gray-700">
+            <div class="flex items-center space-x-4 rtl:space-x-reverse">
+                <span id="other-user-avatar" class="text-3xl"></span>
+                <div>
+                    <h1 id="other-user-name" class="text-xl font-bold"></h1>
+                    <p id="other-user-status" class="text-sm text-green-400">متصل الآن</p>
+                </div>
+            </div>
+            <h2 class="text-xl font-bold text-blue-300">Space Chat</h2>
+        </header>
+        <main id="chat-window" class="flex-1 p-4 overflow-y-auto"></main>
+        <footer class="p-4 bg-gray-800/50 backdrop-blur-md border-t border-gray-700">
+            <form id="message-form" class="flex items-center space-x-3 rtl:space-x-reverse">
+                <input id="message-input" type="text" class="flex-1 w-full px-4 py-3 text-white bg-gray-700 border border-gray-600 rounded-full focus:ring-blue-500 focus:border-blue-500 focus:outline-none focus:ring-2" placeholder="اكتب رسالتك المشفرة..." autocomplete="off">
+                <button id="send-button" type="submit" class="p-3 bg-blue-600 rounded-full hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 focus:ring-offset-gray-800 transition-transform transform hover:scale-110">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+                    </svg>
+                </button>
+            </form>
+        </footer>
+    </div>
+    
+    <!-- Firebase SDKs -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getFirestore, collection, addDoc, query, onSnapshot, serverTimestamp, doc, setDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        
+        const firebaseConfig = {
+          apiKey: "AIzaSyBRWG4lw7Qy_kVZ5U3fFCG_z9aITOrtKHc",
+          authDomain: "neptune-4153a.firebaseapp.com",
+          projectId: "neptune-4153a",
+          storageBucket: "neptune-4153a.firebasestorage.app",
+          messagingSenderId: "846969964913",
+          appId: "1:846969964913:web:aa53dbfe6b821102b10ed0"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        const auth = getAuth(app);
+
+        // --- Security Constants ---
+        const CORRECT_PASSWORD_HASH = 'c152a51a833593246a3693e872c5750868a834240751a37c8973b1bf8a487a38';
+        const SECRET_KEY = 'neptune'; 
+
+        // --- App State & DOM Elements ---
+        let currentUser, otherUser;
+        const loginScreen = document.getElementById('login-screen');
+        const loginForm = document.getElementById('login-form');
+        const loginError = document.getElementById('login-error');
+        const userSelectionScreen = document.getElementById('user-selection-screen');
+        const chatApp = document.getElementById('chat-app');
+        const messageForm = document.getElementById('message-form');
+        const messageInput = document.getElementById('message-input');
+        const chatWindow = document.getElementById('chat-window');
+        
+        // --- Crypto Functions ---
+        function encryptMessage(text) { return CryptoJS.AES.encrypt(text, SECRET_KEY).toString(); }
+        function decryptMessage(ciphertext) {
+            const bytes = CryptoJS.AES.decrypt(ciphertext, SECRET_KEY);
+            return bytes.toString(CryptoJS.enc.Utf8);
+        }
+
+        // --- Login Logic ---
+        loginForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const username = loginForm.username.value.toLowerCase();
+            const passwordInput = loginForm.password.value;
+            const passwordInputHash = CryptoJS.SHA256(passwordInput).toString(CryptoJS.enc.Hex);
+            if (username === 'martha' && passwordInputHash === CORRECT_PASSWORD_HASH) {
+                loginScreen.classList.add('hidden');
+                userSelectionScreen.classList.remove('hidden');
+            } else {
+                loginError.classList.remove('hidden');
+            }
+        });
+        
+        // --- User Selection ---
+        document.getElementById('select-neptune').addEventListener('click', () => { currentUser = 'neptune'; otherUser = 'martha'; startApp(); });
+        document.getElementById('select-martha').addEventListener('click', () => { currentUser = 'martha'; otherUser = 'neptune'; startApp(); });
+
+        async function startApp() {
+            try {
+                await signInAnonymously(auth);
+                userSelectionScreen.classList.add('hidden');
+                chatApp.style.display = 'flex';
+                setupChatUI();
+                listenForMessages();
+                listenForStatus();
+                updateStatus();
+            } catch (error) {
+                console.error("Error starting app:", error);
+                alert("لا يمكن الاتصال بالخدمة.");
+            }
+        }
+
+        // --- UI & Firestore Functions ---
+        function setupChatUI() {
+            document.getElementById('other-user-name').textContent = otherUser.charAt(0).toUpperCase() + otherUser.slice(1);
+            document.getElementById('other-user-avatar').textContent = otherUser === 'neptune' ? '🪐' : '✨';
+        }
+
+        function listenForMessages() {
+            const messagesRef = collection(db, 'messages');
+            const q = query(messagesRef);
+            onSnapshot(q, (snapshot) => {
+                const messages = [];
+                snapshot.forEach(doc => messages.push({ ...doc.data(), id: doc.id }));
+                messages.sort((a, b) => (a.timestamp?.toMillis() || 0) - (b.timestamp?.toMillis() || 0));
+                chatWindow.innerHTML = '';
+                messages.forEach(displayMessage);
+                chatWindow.scrollTop = chatWindow.scrollHeight;
+            });
+        }
+        
+        function listenForStatus() {
+            const statusRef = doc(db, 'status', otherUser);
+            onSnapshot(statusRef, (doc) => {
+                const statusEl = document.getElementById('other-user-status');
+                if (doc.exists()) {
+                    const data = doc.data();
+                    const lastOnline = data.lastOnline?.toDate();
+                    if (lastOnline) {
+                        const diffMinutes = (new Date() - lastOnline) / (1000 * 60);
+                        if (diffMinutes < 2) {
+                             statusEl.textContent = 'متصل الآن';
+                             statusEl.classList.remove('text-yellow-400');
+                             statusEl.classList.add('text-green-400');
+                        } else {
+                            statusEl.textContent = formatTimeAgo(lastOnline);
+                             statusEl.classList.remove('text-green-400');
+                             statusEl.classList.add('text-yellow-400');
+                        }
+                    }
+                } else {
+                    statusEl.textContent = 'غير معروف';
+                }
+            });
+        }
+
+        function displayMessage(msg) {
+            const isMe = msg.sender === currentUser;
+            const content = msg.encryptedContent ? decryptMessage(msg.encryptedContent) : '';
+            const messageElement = `
+                <div class="flex ${isMe ? 'justify-end' : 'justify-start'} mb-4">
+                    <div class="max-w-md">
+                        <div class="${isMe ? 'chat-bubble-me' : 'chat-bubble-other'} text-white p-3 rounded-2xl ${isMe ? 'rounded-br-lg' : 'rounded-bl-lg'}">
+                            <p>${content}</p>
+                        </div>
+                        <div class="text-xs ${isMe ? 'text-right' : 'text-left'} text-gray-400 mt-1 pr-2 rtl:pr-0 rtl:pl-2">
+                            ${msg.timestamp ? formatMessageTime(msg.timestamp.toDate()) : ''}
+                        </div>
+                    </div>
+                </div>`;
+            chatWindow.innerHTML += messageElement;
+        }
+
+        messageForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const text = messageInput.value.trim();
+            if (text) {
+                try {
+                    await addDoc(collection(db, 'messages'), {
+                        sender: currentUser,
+                        encryptedContent: encryptMessage(text),
+                        timestamp: serverTimestamp(),
+                    });
+                    messageInput.value = '';
+                    updateStatus();
+                } catch (error) {
+                    console.error("Error sending message: ", error);
+                }
+            }
+        });
+
+        function updateStatus() {
+            setDoc(doc(db, 'status', currentUser), { lastOnline: serverTimestamp() }, { merge: true });
+        }
+        
+        setInterval(updateStatus, 60000);
+
+        // --- Time Formatting Helpers ---
+        function formatMessageTime(date) {
+            return date.toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' });
+        }
+
+        function formatTimeAgo(date) {
+            const now = new Date();
+            // احسب الفارق الإجمالي بالثواني
+            const totalSeconds = Math.floor((now - date) / 1000);
+
+            // إذا كان الفارق أقل من ثانية، اعرض "الآن"
+            if (totalSeconds < 1) {
+                return 'الآن';
+            }
+
+            const days = Math.floor(totalSeconds / 86400);
+            const hours = Math.floor((totalSeconds % 86400) / 3600);
+            const minutes = Math.floor((totalSeconds % 3600) / 60);
+            const seconds = totalSeconds % 60;
+
+            const parts = [];
+
+            if (days > 0) {
+                parts.push(`${days} أيام`);
+            }
+            if (hours > 0) {
+                parts.push(`${hours} ساعات`);
+            }
+            if (minutes > 0) {
+                parts.push(`${minutes} دقائق`);
+            }
+            if (seconds > 0 && days === 0 && hours === 0) { // اعرض الثواني فقط إذا كان الفارق أقل من ساعة
+                parts.push(`${seconds} ثانية`);
+            }
+            
+            // إذا كانت المصفوفة فارغة (الفارق أقل من دقيقة)
+            if (parts.length === 0){
+                return `منذ بضع ثوانٍ`;
+            }
+
+            // قم بدمج الأجزاء مع " و " باللغة العربية
+            return `منذ ${parts.join(' و ')}`;
+        }
+    </script>
+</body>
+</html>
