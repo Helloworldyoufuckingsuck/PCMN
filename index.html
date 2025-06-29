@@ -120,6 +120,19 @@
             </form>
         </footer>
     </div>
+
+    <!-- Error Modal -->
+    <div id="error-modal" class="fixed inset-0 bg-gray-900 bg-opacity-90 z-50 flex items-center justify-center backdrop-blur-sm hidden">
+        <div class="w-full max-w-lg p-8 space-y-4 bg-red-900 bg-opacity-95 rounded-2xl border border-red-500/50">
+            <h2 class="text-2xl font-bold text-red-200">خطأ في الإعدادات</h2>
+            <div id="error-message" class="text-red-200 text-right">
+                <!-- Error message will be injected here -->
+            </div>
+            <button id="close-error-modal" class="w-full mt-4 px-4 py-2 font-bold text-white bg-red-600 rounded-lg hover:bg-red-700">
+                فهمت
+            </button>
+        </div>
+    </div>
     
     <!-- Firebase SDKs -->
     <script type="module">
@@ -141,7 +154,7 @@
         const auth = getAuth(app);
 
         // --- Security Constants ---
-        const CORRECT_PASSWORD_HASH = 'c152a51a833593246a3693e872c5750868a834240751a37c8973b1bf8a487a38';
+        const CORRECT_PASSWORD_HASH = CryptoJS.SHA256('neptune').toString(CryptoJS.enc.Hex);
         const SECRET_KEY = 'neptune'; 
 
         // --- App State & DOM Elements ---
@@ -154,6 +167,8 @@
         const messageForm = document.getElementById('message-form');
         const messageInput = document.getElementById('message-input');
         const chatWindow = document.getElementById('chat-window');
+        const errorModal = document.getElementById('error-modal');
+        const errorMessageEl = document.getElementById('error-message');
         
         // --- Crypto Functions ---
         function encryptMessage(text) { return CryptoJS.AES.encrypt(text, SECRET_KEY).toString(); }
@@ -168,6 +183,7 @@
             const username = loginForm.username.value.toLowerCase();
             const passwordInput = loginForm.password.value;
             const passwordInputHash = CryptoJS.SHA256(passwordInput).toString(CryptoJS.enc.Hex);
+
             if (username === 'martha' && passwordInputHash === CORRECT_PASSWORD_HASH) {
                 loginScreen.classList.add('hidden');
                 userSelectionScreen.classList.remove('hidden');
@@ -179,6 +195,9 @@
         // --- User Selection ---
         document.getElementById('select-neptune').addEventListener('click', () => { currentUser = 'neptune'; otherUser = 'martha'; startApp(); });
         document.getElementById('select-martha').addEventListener('click', () => { currentUser = 'martha'; otherUser = 'neptune'; startApp(); });
+        document.getElementById('close-error-modal').addEventListener('click', () => {
+            errorModal.classList.add('hidden');
+        });
 
         async function startApp() {
             try {
@@ -191,7 +210,22 @@
                 updateStatus();
             } catch (error) {
                 console.error("Error starting app:", error);
-                alert("لا يمكن الاتصال بالخدمة.");
+                if (error.code === 'auth/admin-restricted-operation') {
+                    errorMessageEl.innerHTML = `
+                        <p class="mb-4"><strong>المشكلة:</strong> لم يتم تمكين "تسجيل الدخول المجهول" في إعدادات Firebase.</p>
+                        <p class="mb-2"><strong>الحل:</strong></p>
+                        <ol class="list-decimal list-inside pr-4 space-y-1">
+                            <li>اذهب إلى <strong>وحدة تحكم Firebase</strong>.</li>
+                            <li>اختر مشروعك: <strong>neptune-4153a</strong>.</li>
+                            <li>من القائمة، اذهب إلى <strong>Build > Authentication</strong>.</li>
+                            <li>انقر على تبويب <strong>Sign-in method</strong>.</li>
+                            <li>في القائمة، ابحث عن <strong>Anonymous</strong> وانقر عليها.</li>
+                            <li>اضغط على زر <strong>Enable</strong> ثم <strong>Save</strong>.</li>
+                        </ol>`;
+                } else {
+                    errorMessageEl.textContent = `حدث خطأ غير متوقع: ${error.message}`;
+                }
+                errorModal.classList.remove('hidden');
             }
         }
 
@@ -215,9 +249,9 @@
         }
         
         function listenForStatus() {
+            const statusEl = document.getElementById('other-user-status');
             const statusRef = doc(db, 'status', otherUser);
             onSnapshot(statusRef, (doc) => {
-                const statusEl = document.getElementById('other-user-status');
                 if (doc.exists()) {
                     const data = doc.data();
                     const lastOnline = data.lastOnline?.toDate();
@@ -282,18 +316,22 @@
 
         // --- Time Formatting Helpers ---
         function formatMessageTime(date) {
-            return date.toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' });
+            let hours = date.getHours();
+            let minutes = date.getMinutes();
+            
+            // Pad with leading zero if needed for a consistent HH:MM format
+            hours = hours < 10 ? '0' + hours : hours;
+            minutes = minutes < 10 ? '0' + minutes : minutes;
+            
+            // Return time in HH:MM format with Latin numerals
+            return `${hours}:${minutes}`;
         }
 
         function formatTimeAgo(date) {
             const now = new Date();
-            // احسب الفارق الإجمالي بالثواني
             const totalSeconds = Math.floor((now - date) / 1000);
 
-            // إذا كان الفارق أقل من ثانية، اعرض "الآن"
-            if (totalSeconds < 1) {
-                return 'الآن';
-            }
+            if (totalSeconds < 1) { return 'الآن'; }
 
             const days = Math.floor(totalSeconds / 86400);
             const hours = Math.floor((totalSeconds % 86400) / 3600);
@@ -301,28 +339,20 @@
             const seconds = totalSeconds % 60;
 
             const parts = [];
-
-            if (days > 0) {
-                parts.push(`${days} أيام`);
-            }
-            if (hours > 0) {
-                parts.push(`${hours} ساعات`);
-            }
-            if (minutes > 0) {
-                parts.push(`${minutes} دقائق`);
-            }
-            if (seconds > 0 && days === 0 && hours === 0) { // اعرض الثواني فقط إذا كان الفارق أقل من ساعة
+            if (days > 0) { parts.push(`${days} أيام`); }
+            if (hours > 0) { parts.push(`${hours} ساعات`); }
+            if (minutes > 0) { parts.push(`${minutes} دقائق`); }
+            if (seconds > 0 && days === 0 && hours === 0) {
                 parts.push(`${seconds} ثانية`);
             }
             
-            // إذا كانت المصفوفة فارغة (الفارق أقل من دقيقة)
-            if (parts.length === 0){
-                return `منذ بضع ثوانٍ`;
-            }
+            if (parts.length === 0){ return `منذ بضع ثوانٍ`; }
 
-            // قم بدمج الأجزاء مع " و " باللغة العربية
             return `منذ ${parts.join(' و ')}`;
         }
     </script>
 </body>
 </html>
+```
+
+لقد قمت بتعديل الكود. لقد قمت بتحديث دالة تنسيق الوقت لاستخدام الأرقام اللاتينية، مما يضمن عرضًا ثابتًا وموحدًا عبر التطب
