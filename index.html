@@ -1,68 +1,29 @@
 <!DOCTYPE html>
-<html lang="ar" dir="rtl">
+<html lang="ar" dir="rtl" class="h-full">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Neptune & Martha | Private Space Chat</title>
     
-    <!-- Tailwind CSS for styling -->
     <script src="https://cdn.tailwindcss.com"></script>
-    
-    <!-- Google Fonts for a spacey feel -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Exo+2:wght@300;400;700&family=Cairo:wght@400;700&display=swap" rel="stylesheet">
-    
-    <!-- CryptoJS for encryption and hashing -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
     
     <style>
-        body {
-            font-family: 'Cairo', 'Exo 2', sans-serif;
-            -webkit-font-smoothing: antialiased;
-            -moz-osx-font-smoothing: grayscale;
-        }
-        .glow-shadow {
-            box-shadow: 0 0 15px rgba(76, 209, 255, 0.4), 0 0 5px rgba(76, 209, 255, 0.6);
-        }
-        .pink-glow-shadow {
-            box-shadow: 0 0 15px rgba(236, 72, 153, 0.4), 0 0 5px rgba(236, 72, 153, 0.6);
-        }
-        /* Custom scrollbar for a modern look */
-        #chat-window::-webkit-scrollbar {
-            width: 6px;
-        }
-        #chat-window::-webkit-scrollbar-track {
-            background: transparent;
-        }
-        #chat-window::-webkit-scrollbar-thumb {
-            background-color: #4f46e5;
-            border-radius: 20px;
-        }
-        /* Starry background */
-        #star-field {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: #0c0a1a;
-            overflow: hidden;
-            z-index: -1;
-        }
-        .star {
-            position: absolute;
-            background: white;
-            border-radius: 50%;
-            animation: twinkle 5s infinite;
-        }
-        @keyframes twinkle {
-            0%, 100% { opacity: 0.5; }
-            50% { opacity: 1; }
-        }
+        html, body { height: 100%; overflow: hidden; }
+        body { font-family: 'Cairo', 'Exo 2', sans-serif; }
+        .glow-shadow { box-shadow: 0 0 15px rgba(76, 209, 255, 0.4), 0 0 5px rgba(76, 209, 255, 0.6); }
+        #star-field { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #0c0a1a; z-index: -1; }
+        .star { position: absolute; background: white; border-radius: 50%; animation: twinkle 5s infinite; }
+        @keyframes twinkle { 0%, 100% { opacity: 0.5; } 50% { opacity: 1; } }
+        #chat-window::-webkit-scrollbar { width: 6px; }
+        #chat-window::-webkit-scrollbar-track { background: transparent; }
+        #chat-window::-webkit-scrollbar-thumb { background-color: #4f46e5; border-radius: 20px; }
     </style>
 </head>
-<body class="bg-slate-900 text-white overflow-hidden h-screen">
+<body class="bg-slate-900 text-white">
 
     <div id="star-field"></div>
 
@@ -78,42 +39,24 @@
             </div>
             <form id="login-form" class="space-y-4">
                 <div>
-                    <label for="username" class="block text-sm font-medium text-indigo-200">اسم المستخدم</label>
-                    <input type="text" id="username" name="username" class="w-full px-4 py-2 mt-1 text-white bg-slate-700 border border-slate-600 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 focus:outline-none focus:ring-2" placeholder="martha" required>
+                    <label for="email" class="block text-sm font-medium text-indigo-200">البريد الإلكتروني</label>
+                    <input type="email" id="email" name="email" class="w-full px-4 py-2 mt-1 text-white bg-slate-700 border border-slate-600 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 focus:outline-none focus:ring-2" placeholder="user" required>
                 </div>
                 <div>
                     <label for="password" class="block text-sm font-medium text-indigo-200">كلمة المرور</label>
                     <input type="password" id="password" name="password" class="w-full px-4 py-2 mt-1 text-white bg-slate-700 border border-slate-600 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 focus:outline-none focus:ring-2" placeholder="••••••••" required>
                 </div>
-                <p id="login-error" class="text-red-400 text-sm hidden">المعلومات غير صحيحة.</p>
-                <button type="submit" class="w-full px-4 py-3 font-bold text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 focus:ring-offset-slate-800 transition-all duration-300 transform hover:scale-105">
+                <p id="login-error" class="text-red-400 text-sm hidden"></p>
+                <button id="login-button" type="submit" class="w-full px-4 py-3 font-bold text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 focus:ring-offset-slate-800 transition-all duration-300 transform hover:scale-105">
                     العبور
                 </button>
             </form>
         </div>
     </div>
 
-    <!-- User Selection Screen -->
-    <div id="user-selection-screen" class="fixed inset-0 bg-slate-900/80 z-40 flex items-center justify-center backdrop-blur-sm hidden p-4">
-        <div class="text-center">
-            <h1 class="text-4xl font-bold mb-8 text-slate-100">اختر هويتك الكونية</h1>
-            <div class="flex flex-col sm:flex-row gap-8">
-                <button id="select-neptune" class="p-8 bg-indigo-600 rounded-2xl transform hover:scale-110 transition-transform duration-300 glow-shadow">
-                    <span class="text-5xl">🪐</span>
-                    <p class="text-2xl font-bold mt-4">Neptune</p>
-                </button>
-                <button id="select-martha" class="p-8 bg-pink-600 rounded-2xl transform hover:scale-110 transition-transform duration-300 pink-glow-shadow">
-                    <span class="text-5xl">✨</span>
-                    <p class="text-2xl font-bold mt-4">Martha</p>
-                </button>
-            </div>
-        </div>
-    </div>
-    
     <!-- Main Chat Application -->
-    <div id="chat-app" class="h-screen flex flex-col hidden">
-        <!-- Header -->
-        <header class="flex items-center justify-between p-3 sm:p-4 bg-slate-900/70 backdrop-blur-md border-b border-slate-700">
+    <div id="chat-app" class="h-full flex flex-col hidden">
+        <header class="flex-shrink-0 flex items-center justify-between p-3 sm:p-4 bg-slate-900/70 backdrop-blur-md border-b border-slate-700">
             <div class="flex items-center space-x-3 rtl:space-x-reverse">
                 <span id="other-user-avatar" class="text-3xl"></span>
                 <div>
@@ -127,12 +70,8 @@
                 </svg>
             </button>
         </header>
-
-        <!-- Chat Window -->
         <main id="chat-window" class="flex-1 p-4 overflow-y-auto"></main>
-
-        <!-- Message Input -->
-        <footer class="p-3 sm:p-4 bg-slate-900/70 backdrop-blur-md border-t border-slate-700">
+        <footer class="flex-shrink-0 p-3 sm:p-4 bg-slate-900/70 backdrop-blur-md border-t border-slate-700">
             <form id="message-form" class="flex items-center space-x-3 rtl:space-x-reverse">
                 <input id="message-input" type="text" class="flex-1 w-full px-4 py-3 text-white bg-slate-800 border border-slate-700 rounded-full focus:ring-indigo-500 focus:border-indigo-500 focus:outline-none focus:ring-2" placeholder="اكتب رسالة مشفرة..." autocomplete="off">
                 <button id="send-button" type="submit" class="p-3 bg-indigo-600 rounded-full hover:bg-indigo-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 focus:ring-offset-slate-900 transition-all transform hover:scale-110">
@@ -148,7 +87,7 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getFirestore, collection, addDoc, query, onSnapshot, serverTimestamp, doc, setDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-        import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         
         const firebaseConfig = {
           apiKey: "AIzaSyBRWG4lw7Qy_kVZ5U3fFCG_z9aITOrtKHc",
@@ -161,137 +100,148 @@
 
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
-        const auth = getAuth(app);
+        const auth = getAuth();
 
-        // --- Constants ---
-        const CORRECT_PASSWORD_HASH = CryptoJS.SHA256('neptune').toString(CryptoJS.enc.Hex);
         const SECRET_KEY = 'neptune';
 
-        // --- App State & DOM ---
         let currentUser, otherUser;
         const loginScreen = document.getElementById('login-screen');
         const loginForm = document.getElementById('login-form');
         const loginError = document.getElementById('login-error');
-        const userSelectionScreen = document.getElementById('user-selection-screen');
+        const loginButton = document.getElementById('login-button');
         const chatApp = document.getElementById('chat-app');
         const messageForm = document.getElementById('message-form');
         const messageInput = document.getElementById('message-input');
         const chatWindow = document.getElementById('chat-window');
         const logoutButton = document.getElementById('logout-button');
         
-        // --- Core Functions ---
-        function checkSession() {
-            const savedUser = localStorage.getItem('chatUser');
-            if (savedUser) {
-                currentUser = savedUser;
-                otherUser = currentUser === 'neptune' ? 'martha' : 'neptune';
-                loginScreen.classList.add('hidden');
-                userSelectionScreen.classList.add('hidden');
-                startApp();
-            } else {
-                loginScreen.classList.remove('hidden');
-            }
-        }
-
-        async function startApp() {
-            try {
-                await signInAnonymously(auth);
-                chatApp.classList.remove('hidden');
-                chatApp.classList.add('flex'); // Ensure flex display
-                setupChatUI();
-                listenForMessages();
-                listenForStatus();
-                updateStatus();
-            } catch (error) {
-                console.error("Error starting app:", error);
-                alert("لا يمكن الاتصال بالخدمة. تأكد من تفعيل Anonymous Sign-In في إعدادات Firebase Authentication.");
+        function setupUsers(userEmail) {
+            if (userEmail.startsWith('neptune')) {
+                currentUser = 'neptune';
+                otherUser = 'martha';
+            } else if (userEmail.startsWith('martha')) {
+                currentUser = 'martha';
+                otherUser = 'neptune';
             }
         }
         
-        // --- UI Setup & Listeners ---
+        function startApp(user) {
+            setupUsers(user.email);
+            loginScreen.classList.add('hidden');
+            chatApp.classList.remove('hidden');
+            chatApp.classList.add('flex');
+            setupChatUI();
+            listenForMessages();
+            listenForStatus();
+            updateStatus();
+        }
+        
         function setupChatUI() {
             document.getElementById('other-user-name').textContent = otherUser.charAt(0).toUpperCase() + otherUser.slice(1);
             document.getElementById('other-user-avatar').textContent = otherUser === 'neptune' ? '🪐' : '✨';
         }
 
-        loginForm.addEventListener('submit', (e) => {
+        loginForm.addEventListener('submit', async (e) => {
             e.preventDefault();
-            const username = loginForm.username.value.toLowerCase();
-            const passwordInput = loginForm.password.value;
-            const passwordInputHash = CryptoJS.SHA256(passwordInput).toString(CryptoJS.enc.Hex);
+            const email = loginForm.email.value;
+            const password = loginForm.password.value;
+            loginError.classList.add('hidden');
+            loginButton.disabled = true;
+            loginButton.textContent = 'جار التحقق...';
 
-            if (username === 'martha' && passwordInputHash === CORRECT_PASSWORD_HASH) {
-                loginScreen.classList.add('hidden');
-                userSelectionScreen.classList.remove('hidden');
-            } else {
+            try {
+                await signInWithEmailAndPassword(auth, email, password);
+            } catch (error) {
+                if (error.code === 'auth/invalid-credential' || error.code === 'auth/wrong-password' || error.code === 'auth/user-not-found' || error.code === 'auth/invalid-email') {
+                    loginError.textContent = 'البريد الإلكتروني أو كلمة المرور غير صحيحة.';
+                } else {
+                    loginError.textContent = 'حدث خطأ غير متوقع.';
+                }
                 loginError.classList.remove('hidden');
+            } finally {
+                loginButton.disabled = false;
+                loginButton.textContent = 'العبور';
             }
         });
         
-        function selectUser(selectedUser) {
-            currentUser = selectedUser;
-            otherUser = currentUser === 'neptune' ? 'martha' : 'neptune';
-            localStorage.setItem('chatUser', currentUser); // Save user session
-            userSelectionScreen.classList.add('hidden');
-            startApp();
-        }
-
-        document.getElementById('select-neptune').addEventListener('click', () => selectUser('neptune'));
-        document.getElementById('select-martha').addEventListener('click', () => selectUser('martha'));
-
-        logoutButton.addEventListener('click', () => {
-            localStorage.removeItem('chatUser');
-            location.reload();
+        logoutButton.addEventListener('click', async () => {
+            await signOut(auth);
+        });
+        
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                startApp(user);
+            } else {
+                loginScreen.classList.remove('hidden');
+                chatApp.classList.add('hidden');
+                chatApp.classList.remove('flex');
+                currentUser = null;
+                otherUser = null;
+            }
         });
 
-        // --- Firebase Functions ---
         function listenForMessages() {
             const messagesRef = collection(db, 'messages');
             const q = query(messagesRef);
             onSnapshot(q, (snapshot) => {
-                const messages = [];
-                snapshot.forEach(doc => messages.push({ ...doc.data(), id: doc.id }));
+                const messages = snapshot.docs.map(doc => ({...doc.data(), id: doc.id}));
                 messages.sort((a, b) => (a.timestamp?.toMillis() || 0) - (b.timestamp?.toMillis() || 0));
                 
                 chatWindow.innerHTML = '';
                 messages.forEach(displayMessage);
-                chatWindow.scrollTop = chatWindow.scrollHeight;
+                if (chatWindow.scrollHeight - chatWindow.scrollTop < chatWindow.clientHeight + 100) {
+                     chatWindow.scrollTop = chatWindow.scrollHeight;
+                }
+            }, (error) => {
+                console.error("Firestore permission error in message listener:", error);
+                if (error.code === 'permission-denied') {
+                    // This error is now expected if the rules are not set correctly.
+                    // The user should follow the instructions provided in the chat.
+                    alert("خطأ: أذونات الوصول إلى قاعدة البيانات غير كافية. يرجى مراجعة قواعد الأمان في لوحة تحكم Firebase.");
+                }
             });
         }
         
         function listenForStatus() {
-            const statusEl = document.getElementById('other-user-status');
             if (!otherUser) return;
             const statusRef = doc(db, 'status', otherUser);
             onSnapshot(statusRef, (doc) => {
-                if (doc.exists()) {
-                    const data = doc.data();
-                    const lastOnline = data.lastOnline?.toDate();
-                    if (lastOnline) {
-                        const diffMinutes = (new Date() - lastOnline) / (1000 * 60);
-                        if (diffMinutes < 2) {
-                             statusEl.textContent = 'متصل الآن';
-                             statusEl.classList.replace('text-yellow-400', 'text-green-400');
-                        } else {
-                            statusEl.textContent = formatTimeAgo(lastOnline);
-                             statusEl.classList.replace('text-green-400', 'text-yellow-400');
-                        }
-                    }
+                const statusEl = document.getElementById('other-user-status');
+                if (doc.exists() && doc.data().lastOnline) {
+                    const lastOnline = doc.data().lastOnline.toDate();
+                    const diffMinutes = (new Date() - lastOnline) / (1000 * 60);
+                    statusEl.textContent = diffMinutes < 2 ? 'متصل الآن' : formatTimeAgo(lastOnline);
+                    statusEl.classList.toggle('text-green-400', diffMinutes < 2);
+                    statusEl.classList.toggle('text-yellow-400', diffMinutes >= 2);
                 } else {
                     statusEl.textContent = 'غير متصل';
-                    statusEl.classList.replace('text-green-400', 'text-yellow-400');
+                    statusEl.classList.add('text-yellow-400');
+                    statusEl.classList.remove('text-green-400');
                 }
+            }, (error) => {
+                console.error("Firestore permission error in status listener:", error);
             });
         }
 
         function displayMessage(msg) {
             const isMe = msg.sender === currentUser;
-            const content = msg.encryptedContent ? CryptoJS.AES.decrypt(msg.encryptedContent, SECRET_KEY).toString(CryptoJS.enc.Utf8) : '';
+            let content = ''; 
+            try {
+                if (msg.encryptedContent) {
+                   const bytes = CryptoJS.AES.decrypt(msg.encryptedContent, SECRET_KEY);
+                   content = bytes.toString(CryptoJS.enc.Utf8);
+                   if (!content) {
+                       content = '[رسالة قديمة غير قابلة للقراءة]';
+                   }
+                }
+            } catch (e) {
+                content = '[رسالة قديمة غير قابلة للقراءة]';
+            }
+
             const bubbleClasses = isMe ? 'bg-indigo-600 rounded-br-none' : 'bg-slate-700 rounded-bl-none';
-            const justifyClass = isMe ? 'justify-end' : 'justify-start';
             
             const messageElement = `
-                <div class="flex ${justifyClass} mb-4">
+                <div class="flex ${isMe ? 'justify-end' : 'justify-start'} mb-4">
                     <div class="max-w-xs sm:max-w-md">
                         <div class="${bubbleClasses} text-white p-3 rounded-2xl">
                             <p class="break-words">${content}</p>
@@ -309,17 +259,14 @@
             const text = messageInput.value.trim();
             if (text) {
                 try {
-                    const encryptedText = CryptoJS.AES.encrypt(text, SECRET_KEY).toString();
                     await addDoc(collection(db, 'messages'), {
                         sender: currentUser,
-                        encryptedContent: encryptedText,
+                        encryptedContent: CryptoJS.AES.encrypt(text, SECRET_KEY).toString(),
                         timestamp: serverTimestamp(),
                     });
                     messageInput.value = '';
                     updateStatus();
-                } catch (error) {
-                    console.error("Error sending message: ", error);
-                }
+                } catch (error) { console.error("Error sending message:", error); }
             }
         });
 
@@ -330,31 +277,25 @@
         
         setInterval(updateStatus, 60000);
 
-        // --- Time Formatting ---
-        function formatMessageTime(date) {
-            return date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false });
-        }
-
+        function formatMessageTime(date) { return date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false }); }
         function formatTimeAgo(date) {
-            const now = new Date();
-            const totalSeconds = Math.floor((now - date) / 1000);
+            const totalSeconds = Math.floor((new Date() - date) / 1000);
             if (totalSeconds < 60) return `منذ بضع ثوانٍ`;
             
-            const days = Math.floor(totalSeconds / 86400);
-            const hours = Math.floor((totalSeconds % 86400) / 3600);
-            const minutes = Math.floor((totalSeconds % 3600) / 60);
-
             const parts = [];
+            const days = Math.floor(totalSeconds / 86400);
             if (days > 0) parts.push(`${days} يوم`);
+            const hours = Math.floor((totalSeconds % 86400) / 3600);
             if (hours > 0) parts.push(`${hours} ساعة`);
+            const minutes = Math.floor((totalSeconds % 3600) / 60);
             if (minutes > 0) parts.push(`${minutes} دقيقة`);
             
             return `منذ ${parts.join(' و ')}`;
         }
         
-        // --- Background Stars ---
         function createStars() {
             const starField = document.getElementById('star-field');
+            if(starField.children.length > 0) return;
             for (let i = 0; i < 150; i++) {
                 const star = document.createElement('div');
                 star.className = 'star';
@@ -369,12 +310,7 @@
             }
         }
         
-        // --- App Initialization ---
         createStars();
-        checkSession();
-
     </script>
 </body>
 </html>
-```
-
