@@ -70,7 +70,14 @@
                 </svg>
             </button>
         </header>
-        <main id="chat-window" class="flex-1 p-4 overflow-y-auto"></main>
+        <main id="chat-window" class="flex-1 p-4 overflow-y-auto">
+            <div id="loading-spinner" class="text-center py-4 hidden">
+                <svg class="animate-spin h-6 w-6 text-indigo-400 mx-auto" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+            </div>
+        </main>
         <footer class="flex-shrink-0 p-3 sm:p-4 bg-slate-900/70 backdrop-blur-md border-t border-slate-700">
             <form id="message-form" class="flex items-center space-x-3 rtl:space-x-reverse">
                 <input id="message-input" type="text" class="flex-1 w-full px-4 py-3 text-white bg-slate-800 border border-slate-700 rounded-full focus:ring-indigo-500 focus:border-indigo-500 focus:outline-none focus:ring-2" placeholder="اكتب رسالة مشفرة..." autocomplete="off">
@@ -86,7 +93,7 @@
     <!-- Firebase SDKs -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getFirestore, collection, addDoc, query, onSnapshot, serverTimestamp, doc, setDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getFirestore, collection, addDoc, query, onSnapshot, serverTimestamp, doc, setDoc, orderBy, limit, getDocs, startAfter, endBefore } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
         import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         
         const firebaseConfig = {
@@ -105,6 +112,11 @@
         const SECRET_KEY = 'neptune';
 
         let currentUser, otherUser;
+        let oldestMessageDoc = null;
+        let isLoadingMore = false;
+        let hasMoreMessages = true;
+        let unsubscribeFromNewMessages = null;
+
         const loginScreen = document.getElementById('login-screen');
         const loginForm = document.getElementById('login-form');
         const loginError = document.getElementById('login-error');
@@ -114,6 +126,7 @@
         const messageInput = document.getElementById('message-input');
         const chatWindow = document.getElementById('chat-window');
         const logoutButton = document.getElementById('logout-button');
+        const loadingSpinner = document.getElementById('loading-spinner');
         
         function setupUsers(userEmail) {
             if (userEmail.startsWith('neptune')) {
@@ -125,13 +138,16 @@
             }
         }
         
-        function startApp(user) {
+        async function startApp(user) {
             setupUsers(user.email);
             loginScreen.classList.add('hidden');
             chatApp.classList.remove('hidden');
             chatApp.classList.add('flex');
             setupChatUI();
-            listenForMessages();
+            
+            await loadInitialMessages();
+            listenForNewMessages();
+
             listenForStatus();
             updateStatus();
         }
@@ -152,11 +168,7 @@
             try {
                 await signInWithEmailAndPassword(auth, email, password);
             } catch (error) {
-                if (error.code === 'auth/invalid-credential' || error.code === 'auth/wrong-password' || error.code === 'auth/user-not-found' || error.code === 'auth/invalid-email') {
-                    loginError.textContent = 'البريد الإلكتروني أو كلمة المرور غير صحيحة.';
-                } else {
-                    loginError.textContent = 'حدث خطأ غير متوقع.';
-                }
+                loginError.textContent = 'البريد الإلكتروني أو كلمة المرور غير صحيحة.';
                 loginError.classList.remove('hidden');
             } finally {
                 loginButton.disabled = false;
@@ -165,6 +177,7 @@
         });
         
         logoutButton.addEventListener('click', async () => {
+            if (unsubscribeFromNewMessages) unsubscribeFromNewMessages();
             await signOut(auth);
         });
         
@@ -180,78 +193,127 @@
             }
         });
 
-        function listenForMessages() {
+        async function loadInitialMessages() {
             const messagesRef = collection(db, 'messages');
-            const q = query(messagesRef);
-            onSnapshot(q, (snapshot) => {
-                const messages = snapshot.docs.map(doc => ({...doc.data(), id: doc.id}));
-                messages.sort((a, b) => (a.timestamp?.toMillis() || 0) - (b.timestamp?.toMillis() || 0));
-                
-                chatWindow.innerHTML = '';
-                messages.forEach(displayMessage);
-                if (chatWindow.scrollHeight - chatWindow.scrollTop < chatWindow.clientHeight + 100) {
-                     chatWindow.scrollTop = chatWindow.scrollHeight;
-                }
-            }, (error) => {
-                console.error("Firestore permission error in message listener:", error);
-                if (error.code === 'permission-denied') {
-                    // This error is now expected if the rules are not set correctly.
-                    // The user should follow the instructions provided in the chat.
-                    alert("خطأ: أذونات الوصول إلى قاعدة البيانات غير كافية. يرجى مراجعة قواعد الأمان في لوحة تحكم Firebase.");
-                }
-            });
-        }
-        
-        function listenForStatus() {
-            if (!otherUser) return;
-            const statusRef = doc(db, 'status', otherUser);
-            onSnapshot(statusRef, (doc) => {
-                const statusEl = document.getElementById('other-user-status');
-                if (doc.exists() && doc.data().lastOnline) {
-                    const lastOnline = doc.data().lastOnline.toDate();
-                    const diffMinutes = (new Date() - lastOnline) / (1000 * 60);
-                    statusEl.textContent = diffMinutes < 2 ? 'متصل الآن' : formatTimeAgo(lastOnline);
-                    statusEl.classList.toggle('text-green-400', diffMinutes < 2);
-                    statusEl.classList.toggle('text-yellow-400', diffMinutes >= 2);
-                } else {
-                    statusEl.textContent = 'غير متصل';
-                    statusEl.classList.add('text-yellow-400');
-                    statusEl.classList.remove('text-green-400');
-                }
-            }, (error) => {
-                console.error("Firestore permission error in status listener:", error);
-            });
+            const q = query(messagesRef, orderBy("timestamp", "desc"), limit(25));
+            const snapshot = await getDocs(q);
+
+            const messages = snapshot.docs.map(doc => ({...doc.data(), id: doc.id})).reverse();
+            chatWindow.innerHTML = '';
+            // Re-add spinner at the top
+            chatWindow.appendChild(loadingSpinner);
+            messages.forEach(displayMessage);
+            chatWindow.scrollTop = chatWindow.scrollHeight;
+
+            if (snapshot.docs.length > 0) {
+                oldestMessageDoc = snapshot.docs[snapshot.docs.length - 1];
+            } else {
+                hasMoreMessages = false;
+            }
         }
 
-        function displayMessage(msg) {
-            const isMe = msg.sender === currentUser;
+        async function loadMoreMessages() {
+            if (isLoadingMore || !hasMoreMessages) return;
+
+            isLoadingMore = true;
+            loadingSpinner.classList.remove('hidden');
+
+            const messagesRef = collection(db, 'messages');
+            const q = query(messagesRef, orderBy("timestamp", "desc"), startAfter(oldestMessageDoc), limit(25));
+            
+            try {
+                const snapshot = await getDocs(q);
+                if (snapshot.empty) {
+                    hasMoreMessages = false;
+                    loadingSpinner.classList.add('hidden');
+                    return;
+                }
+
+                const oldScrollHeight = chatWindow.scrollHeight;
+                const messages = snapshot.docs.map(doc => ({...doc.data(), id: doc.id})).reverse();
+                
+                messages.forEach(msg => {
+                    const firstMessage = chatWindow.querySelector('.flex');
+                    const messageElement = createMessageElement(msg);
+                    if(firstMessage) {
+                        chatWindow.insertBefore(messageElement, firstMessage.nextSibling); // Insert after spinner
+                    } else {
+                         chatWindow.appendChild(messageElement);
+                    }
+                });
+
+                chatWindow.scrollTop = chatWindow.scrollHeight - oldScrollHeight;
+                oldestMessageDoc = snapshot.docs[snapshot.docs.length - 1];
+
+            } catch(error) {
+                console.error("Error loading more messages:", error);
+            } finally {
+                isLoadingMore = false;
+                loadingSpinner.classList.add('hidden');
+            }
+        }
+
+        function listenForNewMessages() {
+             const messagesRef = collection(db, 'messages');
+             const q = query(messagesRef, orderBy("timestamp", "desc"), limit(1));
+
+             if (unsubscribeFromNewMessages) unsubscribeFromNewMessages();
+
+             unsubscribeFromNewMessages = onSnapshot(q, (snapshot) => {
+                snapshot.docChanges().forEach((change) => {
+                    if (change.type === "added") {
+                        const newMessage = { ...change.doc.data(), id: change.doc.id };
+                        // Avoid re-adding messages we already have from the initial load
+                        if(!document.getElementById(change.doc.id)){
+                             displayMessage(newMessage, true);
+                             chatWindow.scrollTop = chatWindow.scrollHeight;
+                        }
+                    }
+                });
+             });
+        }
+        
+        chatWindow.addEventListener('scroll', () => {
+            if (chatWindow.scrollTop === 0) {
+                loadMoreMessages();
+            }
+        });
+
+        function createMessageElement(msg) {
+             const isMe = msg.sender === currentUser;
             let content = ''; 
             try {
                 if (msg.encryptedContent) {
                    const bytes = CryptoJS.AES.decrypt(msg.encryptedContent, SECRET_KEY);
-                   content = bytes.toString(CryptoJS.enc.Utf8);
-                   if (!content) {
-                       content = '[رسالة قديمة غير قابلة للقراءة]';
-                   }
+                   content = bytes.toString(CryptoJS.enc.Utf8) || '[فشل فك التشفير]';
                 }
-            } catch (e) {
-                content = '[رسالة قديمة غير قابلة للقراءة]';
-            }
+            } catch (e) { content = '[رسالة قديمة]'; }
 
             const bubbleClasses = isMe ? 'bg-indigo-600 rounded-br-none' : 'bg-slate-700 rounded-bl-none';
             
-            const messageElement = `
-                <div class="flex ${isMe ? 'justify-end' : 'justify-start'} mb-4">
-                    <div class="max-w-xs sm:max-w-md">
-                        <div class="${bubbleClasses} text-white p-3 rounded-2xl">
-                            <p class="break-words">${content}</p>
-                        </div>
-                        <div class="text-xs ${isMe ? 'text-right' : 'text-left'} text-slate-400 mt-1 px-2">
-                            ${msg.timestamp ? formatMessageTime(msg.timestamp.toDate()) : ''}
-                        </div>
+            const messageContainer = document.createElement('div');
+            messageContainer.className = `flex ${isMe ? 'justify-end' : 'justify-start'} mb-4`;
+            messageContainer.id = msg.id;
+            
+            messageContainer.innerHTML = `
+                <div class="max-w-xs sm:max-w-md">
+                    <div class="${bubbleClasses} text-white p-3 rounded-2xl">
+                        <p class="break-words">${content}</p>
+                    </div>
+                    <div class="text-xs ${isMe ? 'text-right' : 'text-left'} text-slate-400 mt-1 px-2">
+                        ${msg.timestamp ? formatMessageTime(msg.timestamp.toDate()) : ''}
                     </div>
                 </div>`;
-            chatWindow.insertAdjacentHTML('beforeend', messageElement);
+            return messageContainer;
+        }
+
+        function displayMessage(msg, append = false) {
+             const messageElement = createMessageElement(msg);
+             if(append) {
+                chatWindow.appendChild(messageElement);
+             } else {
+                loadingSpinner.insertAdjacentElement('afterend', messageElement);
+             }
         }
 
         messageForm.addEventListener('submit', async (e) => {
@@ -270,6 +332,25 @@
             }
         });
 
+        function listenForStatus() {
+            if (!otherUser) return;
+            const statusRef = doc(db, 'status', otherUser);
+            onSnapshot(statusRef, (doc) => {
+                const statusEl = document.getElementById('other-user-status');
+                if (doc.exists() && doc.data().lastOnline) {
+                    const lastOnline = doc.data().lastOnline.toDate();
+                    const diffMinutes = (new Date() - lastOnline) / (1000 * 60);
+                    statusEl.textContent = diffMinutes < 2 ? 'متصل الآن' : formatTimeAgo(lastOnline);
+                    statusEl.classList.toggle('text-green-400', diffMinutes < 2);
+                    statusEl.classList.toggle('text-yellow-400', diffMinutes >= 2);
+                } else {
+                    statusEl.textContent = 'غير متصل';
+                    statusEl.classList.add('text-yellow-400');
+                    statusEl.classList.remove('text-green-400');
+                }
+            });
+        }
+        
         function updateStatus() {
             if (!currentUser) return;
             setDoc(doc(db, 'status', currentUser), { lastOnline: serverTimestamp() }, { merge: true });
